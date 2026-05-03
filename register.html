@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register — HostelEase</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body class="auth-page">
+
+<div class="auth-box" style="max-width:460px;">
+  <div class="auth-logo">
+    <div class="logo-icon">🏠</div>
+    <h1>HostelEase</h1>
+    <p id="reg-subtitle">Create your account</p>
+  </div>
+
+  <!-- Role Toggle -->
+  <div class="role-grid" style="margin-bottom:1.5rem;">
+    <div class="role-btn selected" onclick="switchRegRole(this,'Student')">
+      <span class="ri">🎓</span>Student
+    </div>
+    <div class="role-btn" onclick="switchRegRole(this,'Warden')">
+      <span class="ri">🛡️</span>Warden
+    </div>
+  </div>
+
+  <form id="regForm" autocomplete="off" style="display:flex;flex-direction:column;gap:1rem;">
+    <!-- Common fields -->
+    <div class="form-group">
+      <label>Full Name</label>
+      <input type="text" id="name" placeholder="Your full name" required/>
+    </div>
+    <div class="form-group">
+      <label>Email Address</label>
+      <input type="email" id="email" placeholder="you@example.com" required/>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Min 6 characters" required minlength="6"/>
+    </div>
+    <div class="form-group">
+      <label>Confirm Password</label>
+      <input type="password" id="confirm" placeholder="Repeat password" required/>
+    </div>
+
+    <!-- Block (both roles) -->
+    <div class="form-group">
+      <label>Hostel Block</label>
+      <select id="block" required onchange="populateRooms()">
+        <option value="">Select Block</option>
+        <option>A</option><option>B</option><option>C</option><option>D</option>
+      </select>
+    </div>
+
+    <!-- Room (Student only) -->
+    <div class="form-group" id="roomGroup">
+      <label>Room Number</label>
+      <select id="room" required>
+        <option value="">Select block first</option>
+      </select>
+    </div>
+
+    <!-- Admin safe password (Warden only) -->
+    <div class="form-group" id="safePassGroup" style="display:none;">
+      <label>Admin Safe Password</label>
+      <input type="password" id="safePass" placeholder="Enter admin-set safe password"/>
+      <small style="color:var(--muted);font-size:0.75rem;margin-top:4px;display:block;">Required to create a Warden account</small>
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:0.5rem;">
+      Create Account →
+    </button>
+  </form>
+
+  <div class="auth-link" style="margin-top:1.25rem;">
+    Already have an account? <a href="login.html">Sign in</a>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script src="app.js"></script>
+<script>
+  let currentRole = 'Student';
+
+  function switchRegRole(el, role) {
+    document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    currentRole = role;
+    document.getElementById('reg-subtitle').textContent =
+      role === 'Student' ? 'Create your student account' : 'Create your warden account';
+    document.getElementById('roomGroup').style.display = role === 'Student' ? '' : 'none';
+    document.getElementById('room').required = role === 'Student';
+    document.getElementById('safePassGroup').style.display = role === 'Warden' ? '' : 'none';
+    // reset room when switching
+    document.getElementById('block').value = '';
+    document.getElementById('room').innerHTML = '<option value="">Select block first</option>';
+  }
+
+  function populateRooms() {
+    const block = document.getElementById('block').value;
+    const roomSel = document.getElementById('room');
+    roomSel.innerHTML = '<option value="">Select Room</option>';
+    if (!block || currentRole === 'Warden') return;
+    for (let floor = 1; floor <= 8; floor++) {
+      for (let num = 1; num <= 30; num++) {
+        const opt = document.createElement('option');
+        opt.value = `${block}-${floor * 100 + num}`;
+        opt.textContent = opt.value;
+        roomSel.appendChild(opt);
+      }
+    }
+  }
+
+  document.getElementById('regForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const name     = document.getElementById('name').value.trim();
+    const email    = document.getElementById('email').value.trim().toLowerCase();
+    const password = document.getElementById('password').value;
+    const confirm  = document.getElementById('confirm').value;
+    const block    = document.getElementById('block').value;
+    const room     = currentRole === 'Student' ? document.getElementById('room').value : '';
+
+    if (password !== confirm) { toast('Passwords do not match', 'error'); return; }
+    if (!block) { toast('Please select a block', 'error'); return; }
+    if (currentRole === 'Student' && !room) { toast('Please select a room', 'error'); return; }
+
+    if (currentRole === 'Warden') {
+      const safePass = document.getElementById('safePass').value;
+      const stored   = Store.getObj('he_admin_safe_pass') || 'admin';
+      if (safePass !== stored) { toast('Incorrect admin safe password', 'error'); return; }
+    }
+
+    const users = Store.get('he_users');
+    if (users.find(u => u.email.toLowerCase() === email)) { toast('Email already registered', 'error'); return; }
+
+    const user = { id: uid(), name, email, password, role: currentRole, room, block };
+    Store.add('he_users', user);
+    Auth.login(user);
+    toast('Account created!', 'success');
+    setTimeout(() => {
+      location.href = currentRole === 'Student' ? 'student/dashboard.html' : 'warden/dashboard.html';
+    }, 700);
+  });
+</script>
+</body>
+</html>

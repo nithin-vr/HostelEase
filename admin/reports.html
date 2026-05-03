@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Reports — Admin — HostelEase</title>
+  <link rel="stylesheet" href="../style.css"/>
+</head>
+<body>
+<div class="app-layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <a href="dashboard.html" class="brand">
+        <div class="brand-icon">🏠</div>
+        <div><div class="brand-name">HostelEase</div><div class="brand-sub">Admin Portal</div></div>
+      </a>
+    </div>
+    <div class="sidebar-user">
+      <div class="su-avatar" id="sb-avatar">A</div>
+      <div class="su-name" id="sb-name">Admin</div>
+      <div class="su-role" id="sb-role">Admin</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="dashboard.html" class="nav-item"><span class="ni">📊</span> Dashboard</a>
+      <div class="nav-section-label">Management</div>
+      <a href="users.html" class="nav-item"><span class="ni">👥</span> Users</a>
+      <a href="reports.html" class="nav-item active"><span class="ni">📈</span> Reports</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="Auth.logout()"><span>🚪</span> Logout</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <h2>Reports & Analytics</h2>
+        <p id="tb-greet">System-wide data overview</p>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-primary btn-sm" onclick="exportCSV()">⬇️ Export CSV</button>
+        <div class="topbar-avatar" id="tb-avatar">A</div>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('complaints')">📣 Complaints</button>
+        <button class="tab-btn" onclick="switchTab('leaves')">📋 Leave</button>
+        <button class="tab-btn" onclick="switchTab('outpasses')">🚪 Outpass</button>
+        <button class="tab-btn" onclick="switchTab('activity')">📊 Activity Log</button>
+      </div>
+
+      <!-- Complaints Report -->
+      <div id="tab-complaints">
+        <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:1.25rem;">
+          <div class="stat-card orange"><div class="stat-icon-wrap">⏳</div><div><div class="stat-value" id="rc-pending">0</div><div class="stat-label">Pending</div></div></div>
+          <div class="stat-card blue"><div class="stat-icon-wrap">🔧</div><div><div class="stat-value" id="rc-progress">0</div><div class="stat-label">In Progress</div></div></div>
+          <div class="stat-card green"><div class="stat-icon-wrap">✅</div><div><div class="stat-value" id="rc-resolved">0</div><div class="stat-label">Resolved</div></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">All Complaints</div></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>#</th><th>Student</th><th>Room</th><th>Category</th><th>Subject</th><th>Priority</th><th>Status</th><th>Date</th><th>Remarks</th></tr></thead>
+              <tbody id="complaintsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Leave Report -->
+      <div id="tab-leaves" style="display:none;">
+        <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:1.25rem;">
+          <div class="stat-card orange"><div class="stat-icon-wrap">⏳</div><div><div class="stat-value" id="rl-pending">0</div><div class="stat-label">Pending</div></div></div>
+          <div class="stat-card green"><div class="stat-icon-wrap">✅</div><div><div class="stat-value" id="rl-approved">0</div><div class="stat-label">Approved</div></div></div>
+          <div class="stat-card red"><div class="stat-icon-wrap">❌</div><div><div class="stat-value" id="rl-rejected">0</div><div class="stat-label">Rejected</div></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">All Leave Requests</div></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>#</th><th>Student</th><th>Room</th><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Status</th><th>Date</th></tr></thead>
+              <tbody id="leavesBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Outpass Report -->
+      <div id="tab-outpasses" style="display:none;">
+        <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:1.25rem;">
+          <div class="stat-card orange"><div class="stat-icon-wrap">⏳</div><div><div class="stat-value" id="ro-pending">0</div><div class="stat-label">Pending</div></div></div>
+          <div class="stat-card green"><div class="stat-icon-wrap">✅</div><div><div class="stat-value" id="ro-approved">0</div><div class="stat-label">Approved</div></div></div>
+          <div class="stat-card red"><div class="stat-icon-wrap">❌</div><div><div class="stat-value" id="ro-rejected">0</div><div class="stat-label">Rejected</div></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">All Outpass Requests</div></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>#</th><th>Student</th><th>Room</th><th>Date</th><th>Return</th><th>Destination</th><th>Status</th><th>Submitted</th></tr></thead>
+              <tbody id="outpassesBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity Log -->
+      <div id="tab-activity" style="display:none;">
+        <div class="card">
+          <div class="card-header"><div class="card-title">System Activity Log</div></div>
+          <div id="activityLog"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script src="../app.js"></script>
+<script>
+  Auth.require('Admin');
+  initSidebar();
+  let currentTab = 'complaints';
+
+  const tabs = ['complaints','leaves','outpasses','activity'];
+
+  function switchTab(t) {
+    currentTab = t;
+    tabs.forEach(x => document.getElementById(`tab-${x}`).style.display = x === t ? '' : 'none');
+    document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', tabs[i] === t));
+    render();
+  }
+
+  function render() {
+    const complaints = Store.get('he_complaints');
+    const leaves = Store.get('he_leaves');
+    const outpasses = Store.get('he_outpasses');
+
+    if (currentTab === 'complaints') {
+      document.getElementById('rc-pending').textContent = complaints.filter(c=>c.status==='Pending').length;
+      document.getElementById('rc-progress').textContent = complaints.filter(c=>c.status==='In Progress').length;
+      document.getElementById('rc-resolved').textContent = complaints.filter(c=>c.status==='Resolved').length;
+      document.getElementById('complaintsBody').innerHTML = complaints.map((c,i) => `
+        <tr>
+          <td>${i+1}</td><td>${c.userName}</td><td>${c.userRoom||'—'}</td>
+          <td>${c.category}</td><td>${c.subject}</td>
+          <td>${c.priority}</td><td>${badge(c.status)}</td>
+          <td style="font-size:0.78rem;">${fmt(c.createdAt)}</td>
+          <td style="font-size:0.78rem;color:var(--muted);">${c.remarks||'—'}</td>
+        </tr>`).join('') || '<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--muted);">No data</td></tr>';
+    }
+
+    if (currentTab === 'leaves') {
+      document.getElementById('rl-pending').textContent = leaves.filter(l=>l.status==='Pending').length;
+      document.getElementById('rl-approved').textContent = leaves.filter(l=>l.status==='Approved').length;
+      document.getElementById('rl-rejected').textContent = leaves.filter(l=>l.status==='Rejected').length;
+      document.getElementById('leavesBody').innerHTML = leaves.map((l,i) => `
+        <tr>
+          <td>${i+1}</td><td>${l.userName}</td><td>${l.userRoom||'—'}</td>
+          <td>${l.leaveType}</td><td>${fmt(l.fromDate)}</td><td>${fmt(l.toDate)}</td>
+          <td><strong>${l.days}</strong></td><td>${badge(l.status)}</td>
+          <td style="font-size:0.78rem;">${fmt(l.createdAt)}</td>
+        </tr>`).join('') || '<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--muted);">No data</td></tr>';
+    }
+
+    if (currentTab === 'outpasses') {
+      document.getElementById('ro-pending').textContent = outpasses.filter(o=>o.status==='Pending').length;
+      document.getElementById('ro-approved').textContent = outpasses.filter(o=>o.status==='Approved').length;
+      document.getElementById('ro-rejected').textContent = outpasses.filter(o=>o.status==='Rejected').length;
+      document.getElementById('outpassesBody').innerHTML = outpasses.map((o,i) => `
+        <tr>
+          <td>${i+1}</td><td>${o.userName}</td><td>${o.userRoom||'—'}</td>
+          <td>${fmt(o.date)}</td><td>${o.returnTime}</td><td>${o.destination}</td>
+          <td>${badge(o.status)}</td><td style="font-size:0.78rem;">${fmt(o.createdAt)}</td>
+        </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--muted);">No data</td></tr>';
+    }
+
+    if (currentTab === 'activity') {
+      const all = [
+        ...complaints.map(c => ({ time: c.createdAt, text: `📣 <strong>${c.userName}</strong> filed complaint: "${c.subject}" — ${badge(c.status)}` })),
+        ...leaves.map(l => ({ time: l.createdAt, text: `📋 <strong>${l.userName}</strong> applied for ${l.leaveType} leave — ${badge(l.status)}` })),
+        ...outpasses.map(o => ({ time: o.createdAt, text: `🚪 <strong>${o.userName}</strong> requested outpass to ${o.destination} — ${badge(o.status)}` })),
+      ].sort((a,b) => b.time - a.time).slice(0, 50);
+
+      document.getElementById('activityLog').innerHTML = all.length ? all.map(a => `
+        <div class="activity-item">
+          <div class="activity-dot"></div>
+          <div>
+            <div class="activity-text">${a.text}</div>
+            <div class="activity-time">${new Date(a.time).toLocaleString('en-IN')}</div>
+          </div>
+        </div>`).join('') : '<div class="empty-state"><div class="es-icon">📭</div><p>No activity yet.</p></div>';
+    }
+  }
+
+  function exportCSV() {
+    const complaints = Store.get('he_complaints');
+    const leaves = Store.get('he_leaves');
+    const outpasses = Store.get('he_outpasses');
+
+    let csv = 'Type,Student,Room,Details,Status,Date\n';
+    complaints.forEach(c => csv += `Complaint,${c.userName},${c.userRoom||''},${c.category}: ${c.subject},${c.status},${fmt(c.createdAt)}\n`);
+    leaves.forEach(l => csv += `Leave,${l.userName},${l.userRoom||''},${l.leaveType} (${l.days} days),${l.status},${fmt(l.createdAt)}\n`);
+    outpasses.forEach(o => csv += `Outpass,${o.userName},${o.userRoom||''},${o.destination},${o.status},${fmt(o.createdAt)}\n`);
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `HostelEase_Report_${today()}.csv`;
+    a.click();
+    toast('Report exported!');
+  }
+
+  render();
+</script>
+</body>
+</html>

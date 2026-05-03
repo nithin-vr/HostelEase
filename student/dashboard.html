@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Student Dashboard — HostelEase</title>
+  <link rel="stylesheet" href="../style.css"/>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <a href="dashboard.html" class="brand">
+        <div class="brand-icon">🏠</div>
+        <div><div class="brand-name">HostelEase</div><div class="brand-sub">Student Portal</div></div>
+      </a>
+    </div>
+    <div class="sidebar-user">
+      <div class="su-avatar" id="sb-avatar">R</div>
+      <div class="su-name" id="sb-name">Student</div>
+      <div class="su-role" id="sb-role">Student</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="dashboard.html" class="nav-item active"><span class="ni">📊</span> Dashboard</a>
+      <div class="nav-section-label">Requests</div>
+      <a href="complaints.html" class="nav-item"><span class="ni">📣</span> Complaints</a>
+      <a href="leave.html" class="nav-item"><span class="ni">📋</span> Leave Request</a>
+      <a href="outpass.html" class="nav-item"><span class="ni">🚪</span> Outpass</a>
+      <div class="nav-section-label">Account</div>
+      <a href="profile.html" class="nav-item"><span class="ni">👤</span> Profile</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="Auth.logout()"><span>🚪</span> Logout</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <h2>Dashboard</h2>
+        <p id="tb-greet">Welcome back!</p>
+      </div>
+      <div class="topbar-right">
+        <button class="notif-btn">🔔<span class="notif-badge" id="notifCount">0</span></button>
+        <div class="topbar-avatar" id="tb-avatar">R</div>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- Hero Banner -->
+      <div class="hero-banner">
+        <div class="hero-text">
+          <div class="hero-title" id="hero-title">Good morning! 👋</div>
+          <div class="hero-sub">Here's what's happening in your hostel today.</div>
+        </div>
+        <div class="hero-meta">
+          <div class="hero-meta-item">🏠 Block <strong id="hero-block">—</strong></div>
+          <div class="hero-meta-item">🚪 Room <strong id="hero-room">—</strong></div>
+          <div class="hero-meta-item" id="hero-date"></div>
+        </div>
+      </div>
+
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card blue">
+          <div class="stat-icon-wrap">📣</div>
+          <div><div class="stat-value" id="s-total-c">0</div><div class="stat-label">Total Complaints</div></div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-icon-wrap">⏳</div>
+          <div><div class="stat-value" id="s-pending-c">0</div><div class="stat-label">Pending Complaints</div></div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon-wrap">✅</div>
+          <div><div class="stat-value" id="s-resolved-c">0</div><div class="stat-label">Resolved</div></div>
+        </div>
+        <div class="stat-card cyan">
+          <div class="stat-icon-wrap">📋</div>
+          <div><div class="stat-value" id="s-leaves">0</div><div class="stat-label">Leave Requests</div></div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-icon-wrap">🚪</div>
+          <div><div class="stat-value" id="s-outpass">0</div><div class="stat-label">Outpass Requests</div></div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;">
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Recent Complaints</div></div>
+            <a href="complaints.html" class="btn btn-ghost btn-sm">View All</a>
+          </div>
+          <div id="recentComplaints"></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Recent Requests</div></div>
+          </div>
+          <div id="recentRequests"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:1.25rem;">
+        <div class="card-header">
+          <div><div class="card-title">Quick Actions</div></div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <a href="complaints.html" class="btn btn-primary">📣 New Complaint</a>
+          <a href="leave.html" class="btn btn-outline">📋 Apply Leave</a>
+          <a href="outpass.html" class="btn btn-ghost">🚪 Request Outpass</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script src="../app.js"></script>
+<script>
+  const u = Auth.require('Student');
+  initSidebar();
+
+  // Hero banner
+  const hr = document.getElementById('hero-title');
+  const h = new Date().getHours();
+  hr.textContent = (h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening') + `, ${u.name.split(' ')[0]}! 👋`;
+  document.getElementById('hero-block').textContent = u.block || '—';
+  document.getElementById('hero-room').textContent = u.room || '—';
+  document.getElementById('hero-date').textContent = '📅 ' + new Date().toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long' });
+
+  function load() {
+    const complaints = Store.get('he_complaints').filter(c => c.userId === u.id);
+    const leaves = Store.get('he_leaves').filter(l => l.userId === u.id);
+    const outpasses = Store.get('he_outpasses').filter(o => o.userId === u.id);
+
+    document.getElementById('s-total-c').textContent = complaints.length;
+    document.getElementById('s-pending-c').textContent = complaints.filter(c => c.status === 'Pending').length;
+    document.getElementById('s-resolved-c').textContent = complaints.filter(c => c.status === 'Resolved').length;
+    document.getElementById('s-leaves').textContent = leaves.length;
+    document.getElementById('s-outpass').textContent = outpasses.length;
+
+    const pending = leaves.filter(l => l.status === 'Pending').length + outpasses.filter(o => o.status === 'Pending').length;
+    document.getElementById('notifCount').textContent = pending;
+
+    const rc = document.getElementById('recentComplaints');
+    if (!complaints.length) {
+      rc.innerHTML = '<div class="empty-state"><div class="es-icon">📭</div><p>No complaints yet</p></div>';
+    } else {
+      rc.innerHTML = complaints.slice(0, 4).map(c => `
+        <div class="activity-item">
+          <div class="activity-dot ${c.status==='Resolved'?'green':c.status==='In Progress'?'':'orange'}"></div>
+          <div>
+            <div class="activity-text"><strong>${c.category}</strong> — ${c.description.slice(0,50)}...</div>
+            <div class="activity-time">${fmt(c.createdAt)} · ${badge(c.status)}</div>
+          </div>
+        </div>`).join('');
+    }
+
+    const rr = document.getElementById('recentRequests');
+    const all = [
+      ...leaves.slice(0,3).map(l => ({ ...l, _t: 'Leave' })),
+      ...outpasses.slice(0,3).map(o => ({ ...o, _t: 'Outpass' }))
+    ].sort((a,b) => b.createdAt - a.createdAt).slice(0,5);
+
+    if (!all.length) {
+      rr.innerHTML = '<div class="empty-state"><div class="es-icon">📭</div><p>No requests yet</p></div>';
+    } else {
+      rr.innerHTML = all.map(r => `
+        <div class="activity-item">
+          <div class="activity-dot ${r.status==='Approved'?'green':r.status==='Rejected'?'red':'orange'}"></div>
+          <div>
+            <div class="activity-text"><strong>${r._t}</strong> — ${r.reason.slice(0,50)}</div>
+            <div class="activity-time">${fmt(r.createdAt)} · ${badge(r.status)}</div>
+          </div>
+        </div>`).join('');
+    }
+  }
+
+  load();
+</script>
+</body>
+</html>

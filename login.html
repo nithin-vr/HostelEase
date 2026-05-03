@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login — HostelEase</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body class="auth-page">
+
+<div class="auth-box">
+  <div class="auth-logo">
+    <div class="logo-icon">🏠</div>
+    <h1>HostelEase</h1>
+    <p>Hostel Management System</p>
+  </div>
+
+  <p class="auth-title">Sign in to your account</p>
+
+  <div class="role-grid">
+    <div class="role-btn selected" onclick="selectRole(this,'Student')">
+      <span class="ri">🎓</span>Student
+    </div>
+    <div class="role-btn" onclick="selectRole(this,'Warden')">
+      <span class="ri">🛡️</span>Warden
+    </div>
+    <div class="role-btn" onclick="selectRole(this,'Admin')">
+      <span class="ri">⚙️</span>Admin
+    </div>
+  </div>
+  <input type="hidden" id="role" value="Student"/>
+
+  <form id="loginForm" autocomplete="off">
+    <div class="form-group" style="margin-bottom:1rem;">
+      <label>Email Address</label>
+      <input type="email" id="email" placeholder="you@example.com" required autocomplete="off"/>
+    </div>
+    <div class="form-group" style="margin-bottom:1.25rem;">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Enter password" required autocomplete="new-password"/>
+    </div>
+    <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">
+      Sign In →
+    </button>
+  </form>
+
+  <div class="auth-link" id="reg-link">
+    Don't have an account? <a href="register.html">Register here</a>
+  </div>
+
+  <div style="margin-top:0.5rem;text-align:center;font-size:0.78rem;color:#94a3b8;" id="reg-note"></div>
+
+  <div style="margin-top:1.25rem;padding:1rem;background:#F8FAFC;border-radius:8px;font-size:0.78rem;color:#6B7280;">
+    <strong>Demo Credentials:</strong><br/>
+    Student: student@hostel.com / student123<br/>
+    Warden: warden@hostel.com / warden123<br/>
+    Admin: admin@gmail.com / admin
+  </div>
+</div>
+
+<div id="toast"></div>
+<script src="app.js"></script>
+<script>
+  // Clear fields on load
+  window.addEventListener('load', () => {
+    document.getElementById('email').value = '';
+    document.getElementById('password').value = '';
+  });
+
+  function selectRole(el, role) {
+    document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('role').value = role;
+    const link = document.getElementById('reg-link');
+    const note = document.getElementById('reg-note');
+    if (role === 'Admin') {
+      link.style.display = 'none';
+      note.textContent = 'Admin accounts are managed by the system only.';
+    } else {
+      link.style.display = '';
+      note.textContent = role === 'Warden' ? 'Warden registration requires the admin safe password.' : '';
+    }
+  }
+
+  document.getElementById('loginForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const email = document.getElementById('email').value.trim().toLowerCase();
+    const password = document.getElementById('password').value;
+    const role = document.getElementById('role').value;
+    const users = Store.get('he_users');
+    const user = users.find(u => u.email.toLowerCase() === email && u.password === password && u.role === role);
+    if (!user) { toast('Invalid credentials or role mismatch', 'error'); return; }
+    Auth.login(user);
+    toast('Login successful!', 'success');
+    setTimeout(() => {
+      if (role === 'Student') location.href = 'student/dashboard.html';
+      else if (role === 'Warden') location.href = 'warden/dashboard.html';
+      else location.href = 'admin/dashboard.html';
+    }, 600);
+  });
+</script>
+</body>
+</html>

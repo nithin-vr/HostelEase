@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Outpass — HostelEase</title>
+  <link rel="stylesheet" href="../style.css"/>
+</head>
+<body>
+<div class="app-layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <a href="dashboard.html" class="brand">
+        <div class="brand-icon">🏠</div>
+        <div><div class="brand-name">HostelEase</div><div class="brand-sub">Student Portal</div></div>
+      </a>
+    </div>
+    <div class="sidebar-user">
+      <div class="su-avatar" id="sb-avatar">R</div>
+      <div class="su-name" id="sb-name">Student</div>
+      <div class="su-role" id="sb-role">Student</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="dashboard.html" class="nav-item"><span class="ni">📊</span> Dashboard</a>
+      <div class="nav-section-label">Requests</div>
+      <a href="complaints.html" class="nav-item"><span class="ni">📣</span> Complaints</a>
+      <a href="leave.html" class="nav-item"><span class="ni">📋</span> Leave Request</a>
+      <a href="outpass.html" class="nav-item active"><span class="ni">🚪</span> Outpass</a>
+      <div class="nav-section-label">Account</div>
+      <a href="profile.html" class="nav-item"><span class="ni">👤</span> Profile</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="Auth.logout()"><span>🚪</span> Logout</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <h2>Outpass Request</h2>
+        <p id="tb-greet">Request permission to go out</p>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-avatar" id="tb-avatar">R</div>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('apply')">🚪 Request Outpass</button>
+        <button class="tab-btn" onclick="switchTab('history')">📜 My Outpasses</button>
+      </div>
+
+      <!-- Apply -->
+      <div id="tab-apply">
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">New Outpass Request</div><div class="card-sub">Same-day or short-duration exit permission</div></div>
+          </div>
+          <form id="outpassForm">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Date</label>
+                <input type="date" id="opDate" required/>
+              </div>
+              <div class="form-group">
+                <label>Expected Return Time</label>
+                <input type="time" id="returnTime" required/>
+              </div>
+              <div class="form-group">
+                <label>Destination</label>
+                <input type="text" id="destination" placeholder="Where are you going?" required/>
+              </div>
+              <div class="form-group">
+                <label>Contact Number</label>
+                <input type="tel" id="contact" placeholder="Your mobile number" required/>
+              </div>
+              <div class="form-group full">
+                <label>Purpose / Reason</label>
+                <textarea id="reason" placeholder="Briefly describe the purpose of going out..." required></textarea>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:0.75rem;">
+              🚪 Submit Request
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- History -->
+      <div id="tab-history" style="display:none;">
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">My Outpass History</div></div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>#</th><th>Date</th><th>Return Time</th><th>Destination</th><th>Reason</th><th>Status</th><th>Remarks</th></tr>
+              </thead>
+              <tbody id="outpassBody"></tbody>
+            </table>
+          </div>
+          <div id="outpassEmpty" class="empty-state" style="display:none;">
+            <div class="es-icon">📭</div><p>No outpass requests yet.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script src="../app.js"></script>
+<script>
+  const u = Auth.require('Student');
+  initSidebar();
+
+  function switchTab(t) {
+    document.getElementById('tab-apply').style.display = t === 'apply' ? '' : 'none';
+    document.getElementById('tab-history').style.display = t === 'history' ? '' : 'none';
+    document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', ['apply','history'][i] === t));
+    if (t === 'history') renderHistory();
+  }
+
+  document.getElementById('outpassForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const item = {
+      id: uid(), userId: u.id, userName: u.name, userRoom: u.room, userBlock: u.block,
+      date: document.getElementById('opDate').value,
+      returnTime: document.getElementById('returnTime').value,
+      destination: document.getElementById('destination').value.trim(),
+      contact: document.getElementById('contact').value.trim(),
+      reason: document.getElementById('reason').value.trim(),
+      status: 'Pending', remarks: '', createdAt: Date.now(),
+    };
+    Store.add('he_outpasses', item);
+    toast('Outpass request submitted!');
+    this.reset();
+  });
+
+  function renderHistory() {
+    const data = Store.get('he_outpasses').filter(o => o.userId === u.id);
+    const tbody = document.getElementById('outpassBody');
+    const empty = document.getElementById('outpassEmpty');
+    if (!data.length) { tbody.innerHTML = ''; empty.style.display = ''; return; }
+    empty.style.display = 'none';
+    tbody.innerHTML = data.map((o, i) => `
+      <tr>
+        <td>${i+1}</td>
+        <td>${fmt(o.date)}</td>
+        <td>${o.returnTime}</td>
+        <td>${o.destination}</td>
+        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${o.reason}</td>
+        <td>${badge(o.status)}</td>
+        <td style="color:var(--muted);font-size:0.82rem;">${o.remarks || '—'}</td>
+      </tr>`).join('');
+  }
+</script>
+</body>
+</html>

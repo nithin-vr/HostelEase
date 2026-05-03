@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard — HostelEase</title>
+  <link rel="stylesheet" href="../style.css"/>
+</head>
+<body>
+<div class="app-layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <a href="dashboard.html" class="brand">
+        <div class="brand-icon">🏠</div>
+        <div><div class="brand-name">HostelEase</div><div class="brand-sub">Admin Portal</div></div>
+      </a>
+    </div>
+    <div class="sidebar-user">
+      <div class="su-avatar" id="sb-avatar">A</div>
+      <div class="su-name" id="sb-name">Admin</div>
+      <div class="su-role" id="sb-role">Admin</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="dashboard.html" class="nav-item active"><span class="ni">📊</span> Dashboard</a>
+      <div class="nav-section-label">Management</div>
+      <a href="users.html" class="nav-item"><span class="ni">👥</span> Users</a>
+      <a href="reports.html" class="nav-item"><span class="ni">📈</span> Reports</a>
+      <div class="nav-section-label">Settings</div>
+      <a href="#" class="nav-item" onclick="document.getElementById('safePassCard').scrollIntoView({behavior:'smooth'});return false;"><span class="ni">🔑</span> Safe Password</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="Auth.logout()"><span>🚪</span> Logout</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <h2>Admin Dashboard</h2>
+        <p id="tb-greet">System overview</p>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-avatar" id="tb-avatar">A</div>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card blue">
+          <div class="stat-icon-wrap">👥</div>
+          <div><div class="stat-value" id="a-users">0</div><div class="stat-label">Total Users</div></div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-icon-wrap">📣</div>
+          <div><div class="stat-value" id="a-complaints">0</div><div class="stat-label">Complaints</div></div>
+        </div>
+        <div class="stat-card cyan">
+          <div class="stat-icon-wrap">📋</div>
+          <div><div class="stat-value" id="a-leaves">0</div><div class="stat-label">Leave Requests</div></div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-icon-wrap">🚪</div>
+          <div><div class="stat-value" id="a-outpasses">0</div><div class="stat-label">Outpass Requests</div></div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon-wrap">✅</div>
+          <div><div class="stat-value" id="a-resolved">0</div><div class="stat-label">Resolved</div></div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem;">
+        <!-- Complaint by Category -->
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Complaints by Category</div></div>
+          </div>
+          <div id="catChart" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+
+        <!-- Request Status Breakdown -->
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Request Status Overview</div></div>
+          </div>
+          <div id="statusChart" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+      </div>
+
+      <!-- Tables Row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;">
+        <!-- Recent Complaints -->
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Recent Complaints</div></div>
+            <a href="../warden/complaints.html" class="btn btn-ghost btn-sm">Manage</a>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Student</th><th>Category</th><th>Status</th><th>Date</th></tr></thead>
+              <tbody id="recentComplaintsBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Recent Leave/Outpass -->
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Recent Requests</div></div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Student</th><th>Type</th><th>Status</th><th>Date</th></tr></thead>
+              <tbody id="recentRequestsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <!-- Safe Password Card -->
+      <div class="card" id="safePassCard" style="max-width:420px;">
+        <div class="card-header">
+          <div><div class="card-title">🔑 Warden Registration Safe Password</div><div class="card-sub">This password is required when a warden creates an account</div></div>
+        </div>
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label>New Safe Password</label>
+          <input type="password" id="newSafePass" placeholder="Set a new safe password"/>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="saveSafePass()">💾 Save Safe Password</button>
+        <div id="safePassCurrent" style="margin-top:0.75rem;font-size:0.8rem;color:var(--muted);"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script src="../app.js"></script>
+<script>
+  Auth.require('Admin');
+  initSidebar();
+
+  function barRow(label, value, max, color) {
+    const pct = max ? Math.round((value / max) * 100) : 0;
+    return `
+      <div style="display:flex;align-items:center;gap:10px;font-size:0.82rem;">
+        <div style="width:90px;color:var(--muted);flex-shrink:0;">${label}</div>
+        <div style="flex:1;background:var(--secondary);border-radius:20px;height:10px;overflow:hidden;">
+          <div style="width:${pct}%;background:${color};height:100%;border-radius:20px;transition:width 0.5s;"></div>
+        </div>
+        <div style="width:28px;text-align:right;font-weight:700;">${value}</div>
+      </div>`;
+  }
+
+  function load() {
+    const users = Store.get('he_users');
+    const complaints = Store.get('he_complaints');
+    const leaves = Store.get('he_leaves');
+    const outpasses = Store.get('he_outpasses');
+
+    document.getElementById('a-users').textContent = users.length;
+    document.getElementById('a-complaints').textContent = complaints.length;
+    document.getElementById('a-leaves').textContent = leaves.length;
+    document.getElementById('a-outpasses').textContent = outpasses.length;
+    document.getElementById('a-resolved').textContent =
+      complaints.filter(c => c.status === 'Resolved').length +
+      leaves.filter(l => l.status === 'Approved').length +
+      outpasses.filter(o => o.status === 'Approved').length;
+
+    // Category chart
+    const cats = ['Electricity','Water','Furniture','Cleaning','Internet','Other'];
+    const catColors = ['#F59E0B','#06B6D4','#8B5CF6','#22C55E','#2563EB','#6B7280'];
+    const maxCat = Math.max(...cats.map(c => complaints.filter(x => x.category === c).length), 1);
+    document.getElementById('catChart').innerHTML = cats.map((c, i) =>
+      barRow(c, complaints.filter(x => x.category === c).length, maxCat, catColors[i])
+    ).join('');
+
+    // Status chart
+    const statusData = [
+      { label: 'Pending', val: complaints.filter(c=>c.status==='Pending').length + leaves.filter(l=>l.status==='Pending').length + outpasses.filter(o=>o.status==='Pending').length, color: '#F59E0B' },
+      { label: 'Approved', val: leaves.filter(l=>l.status==='Approved').length + outpasses.filter(o=>o.status==='Approved').length, color: '#22C55E' },
+      { label: 'Rejected', val: leaves.filter(l=>l.status==='Rejected').length + outpasses.filter(o=>o.status==='Rejected').length, color: '#EF4444' },
+      { label: 'Resolved', val: complaints.filter(c=>c.status==='Resolved').length, color: '#2563EB' },
+      { label: 'In Progress', val: complaints.filter(c=>c.status==='In Progress').length, color: '#06B6D4' },
+    ];
+    const maxSt = Math.max(...statusData.map(s => s.val), 1);
+    document.getElementById('statusChart').innerHTML = statusData.map(s =>
+      barRow(s.label, s.val, maxSt, s.color)
+    ).join('');
+
+    // Recent complaints table
+    document.getElementById('recentComplaintsBody').innerHTML = complaints.slice(0,6).map(c => `
+      <tr>
+        <td>${c.userName}</td>
+        <td>${c.category}</td>
+        <td>${badge(c.status)}</td>
+        <td style="font-size:0.78rem;color:var(--muted);">${fmt(c.createdAt)}</td>
+      </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:1.5rem;">No data</td></tr>';
+
+    // Recent requests table
+    const allReqs = [
+      ...leaves.slice(0,4).map(l => ({ ...l, _t: 'Leave' })),
+      ...outpasses.slice(0,4).map(o => ({ ...o, _t: 'Outpass' }))
+    ].sort((a,b) => b.createdAt - a.createdAt).slice(0,6);
+
+    document.getElementById('recentRequestsBody').innerHTML = allReqs.map(r => `
+      <tr>
+        <td>${r.userName}</td>
+        <td>${r._t}</td>
+        <td>${badge(r.status)}</td>
+        <td style="font-size:0.78rem;color:var(--muted);">${fmt(r.createdAt)}</td>
+      </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:1.5rem;">No data</td></tr>';
+  }
+
+  load();
+
+  function saveSafePass() {
+    const val = document.getElementById('newSafePass').value.trim();
+    if (!val) { toast('Enter a password', 'error'); return; }
+    Store.setObj('he_admin_safe_pass', val);
+    document.getElementById('newSafePass').value = '';
+    document.getElementById('safePassCurrent').textContent = '✅ Safe password updated successfully.';
+    toast('Safe password saved!');
+  }
+
+  // show current status
+  const cur = Store.getObj('he_admin_safe_pass');
+  document.getElementById('safePassCurrent').textContent = cur ? '✅ A safe password is currently set.' : '⚠️ No safe password set yet (default: admin)';
+</script>
+</body>
+</html>

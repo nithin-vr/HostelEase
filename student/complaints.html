@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Complaints — HostelEase</title>
+  <link rel="stylesheet" href="../style.css"/>
+</head>
+<body>
+<div class="app-layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <a href="dashboard.html" class="brand">
+        <div class="brand-icon">🏠</div>
+        <div><div class="brand-name">HostelEase</div><div class="brand-sub">Student Portal</div></div>
+      </a>
+    </div>
+    <div class="sidebar-user">
+      <div class="su-avatar" id="sb-avatar">R</div>
+      <div class="su-name" id="sb-name">Student</div>
+      <div class="su-role" id="sb-role">Student</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="dashboard.html" class="nav-item"><span class="ni">📊</span> Dashboard</a>
+      <div class="nav-section-label">Requests</div>
+      <a href="complaints.html" class="nav-item active"><span class="ni">📣</span> Complaints</a>
+      <a href="leave.html" class="nav-item"><span class="ni">📋</span> Leave Request</a>
+      <a href="outpass.html" class="nav-item"><span class="ni">🚪</span> Outpass</a>
+      <div class="nav-section-label">Account</div>
+      <a href="profile.html" class="nav-item"><span class="ni">👤</span> Profile</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="Auth.logout()"><span>🚪</span> Logout</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <h2>Complaints</h2>
+        <p id="tb-greet">Manage your complaints</p>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-avatar" id="tb-avatar">R</div>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('submit')">📣 Submit Complaint</button>
+        <button class="tab-btn" onclick="switchTab('history')">📜 My Complaints</button>
+      </div>
+
+      <!-- Submit -->
+      <div id="tab-submit">
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">New Complaint</div><div class="card-sub">Report a hostel issue</div></div>
+          </div>
+
+          <div style="margin-bottom:1rem;">
+            <label style="display:block;margin-bottom:8px;">Category</label>
+            <div class="chip-grid" id="catChips">
+              <div class="chip selected" onclick="selectCat(this,'Electricity')">⚡ Electricity</div>
+              <div class="chip" onclick="selectCat(this,'Water')">💧 Water</div>
+              <div class="chip" onclick="selectCat(this,'Furniture')">🪑 Furniture</div>
+              <div class="chip" onclick="selectCat(this,'Cleaning')">🧹 Cleaning</div>
+              <div class="chip" onclick="selectCat(this,'Internet')">🌐 Internet</div>
+              <div class="chip" onclick="selectCat(this,'Other')">📌 Other</div>
+            </div>
+            <input type="hidden" id="category" value="Electricity"/>
+          </div>
+
+          <form id="complaintForm">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Subject</label>
+                <input type="text" id="subject" placeholder="Brief title of the issue" required/>
+              </div>
+              <div class="form-group">
+                <label>Location / Room</label>
+                <input type="text" id="location" placeholder="e.g. Room A-204, Common Area" required/>
+              </div>
+              <div class="form-group full">
+                <label>Description</label>
+                <textarea id="description" placeholder="Describe the issue in detail..." required></textarea>
+              </div>
+              <div class="form-group">
+                <label>Priority</label>
+                <select id="priority">
+                  <option>Low</option>
+                  <option selected>Medium</option>
+                  <option>High</option>
+                </select>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:0.75rem;">
+              📣 Submit Complaint
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- History -->
+      <div id="tab-history" style="display:none;">
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">My Complaints</div></div>
+            <select id="filterStatus" onchange="renderHistory()" style="padding:6px 12px;font-size:0.82rem;border-radius:8px;border:1.5px solid var(--border);">
+              <option value="">All Status</option>
+              <option>Pending</option>
+              <option>In Progress</option>
+              <option>Resolved</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>#</th><th>Category</th><th>Subject</th><th>Location</th><th>Priority</th><th>Status</th><th>Date</th><th>Remarks</th></tr>
+              </thead>
+              <tbody id="historyBody"></tbody>
+            </table>
+          </div>
+          <div id="historyEmpty" class="empty-state" style="display:none;">
+            <div class="es-icon">📭</div><p>No complaints found.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script src="../app.js"></script>
+<script>
+  const u = Auth.require('Student');
+  initSidebar();
+
+  function switchTab(t) {
+    document.getElementById('tab-submit').style.display = t === 'submit' ? '' : 'none';
+    document.getElementById('tab-history').style.display = t === 'history' ? '' : 'none';
+    document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', ['submit','history'][i] === t));
+    if (t === 'history') renderHistory();
+  }
+
+  function selectCat(el, cat) {
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('category').value = cat;
+  }
+
+  document.getElementById('complaintForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const item = {
+      id: uid(), userId: u.id, userName: u.name, userRoom: u.room, userBlock: u.block,
+      category: document.getElementById('category').value,
+      subject: document.getElementById('subject').value.trim(),
+      location: document.getElementById('location').value.trim(),
+      description: document.getElementById('description').value.trim(),
+      priority: document.getElementById('priority').value,
+      status: 'Pending', remarks: '', createdAt: Date.now(),
+    };
+    Store.add('he_complaints', item);
+    toast('Complaint submitted successfully!');
+    this.reset();
+    document.querySelectorAll('.chip').forEach((c,i) => c.classList.toggle('selected', i===0));
+    document.getElementById('category').value = 'Electricity';
+  });
+
+  function renderHistory() {
+    const filter = document.getElementById('filterStatus').value;
+    let data = Store.get('he_complaints').filter(c => c.userId === u.id);
+    if (filter) data = data.filter(c => c.status === filter);
+    const tbody = document.getElementById('historyBody');
+    const empty = document.getElementById('historyEmpty');
+    if (!data.length) { tbody.innerHTML = ''; empty.style.display = ''; return; }
+    empty.style.display = 'none';
+    tbody.innerHTML = data.map((c, i) => `
+      <tr>
+        <td>${i+1}</td>
+        <td>${c.category}</td>
+        <td><strong>${c.subject}</strong></td>
+        <td>${c.location}</td>
+        <td><span class="badge" style="background:${c.priority==='High'?'#fef2f2':c.priority==='Medium'?'#fffbeb':'#f0fdf4'};color:${c.priority==='High'?'#dc2626':c.priority==='Medium'?'#d97706':'#16a34a'}">${c.priority}</span></td>
+        <td>${badge(c.status)}</td>
+        <td>${fmt(c.createdAt)}</td>
+        <td style="color:var(--muted);font-size:0.82rem;">${c.remarks || '—'}</td>
+      </tr>`).join('');
+  }
+</script>
+</body>
+</html>

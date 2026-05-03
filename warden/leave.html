@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Leave Requests — Warden — HostelEase</title>
+  <link rel="stylesheet" href="../style.css"/>
+</head>
+<body>
+<div class="app-layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <a href="dashboard.html" class="brand">
+        <div class="brand-icon">🏠</div>
+        <div><div class="brand-name">HostelEase</div><div class="brand-sub">Warden Portal</div></div>
+      </a>
+    </div>
+    <div class="sidebar-user">
+      <div class="su-avatar" id="sb-avatar">W</div>
+      <div class="su-name" id="sb-name">Warden</div>
+      <div class="su-role" id="sb-role">Warden</div>
+      <div style="margin-top:6px;display:inline-block;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);border-radius:20px;padding:2px 10px;font-size:0.72rem;color:#fff;font-weight:600;">Block <span id="sb-block"></span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="dashboard.html" class="nav-item"><span class="ni">📊</span> Dashboard</a>
+      <div class="nav-section-label">Manage</div>
+      <a href="complaints.html" class="nav-item"><span class="ni">📣</span> Complaints</a>
+      <a href="leave.html" class="nav-item active"><span class="ni">📋</span> Leave Requests</a>
+      <a href="outpass.html" class="nav-item"><span class="ni">🚪</span> Outpass</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="Auth.logout()"><span>🚪</span> Logout</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <h2>Leave Requests</h2>
+        <p id="tb-greet">Approve or reject student leave</p>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-avatar" id="tb-avatar">W</div>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:1.25rem;">
+        <div class="stat-card orange">
+          <div class="stat-icon-wrap">⏳</div>
+          <div><div class="stat-value" id="cnt-pending">0</div><div class="stat-label">Pending</div></div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon-wrap">✅</div>
+          <div><div class="stat-value" id="cnt-approved">0</div><div class="stat-label">Approved</div></div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-icon-wrap">❌</div>
+          <div><div class="stat-value" id="cnt-rejected">0</div><div class="stat-label">Rejected</div></div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('pending')">⏳ Pending</button>
+        <button class="tab-btn" onclick="switchTab('all')">📋 All Requests</button>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title" id="tableTitle">Pending Leave Requests</div></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Student</th><th>Room</th><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Destination</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="leaveBody"></tbody>
+          </table>
+        </div>
+        <div id="emptyState" class="empty-state" style="display:none;">
+          <div class="es-icon">✅</div><p>No requests found.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Action Modal -->
+<div class="modal-overlay" id="actionModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">Review Leave Request</h3>
+      <button class="modal-close" onclick="closeModal('actionModal')">✕</button>
+    </div>
+    <div id="modalDetails" style="background:var(--secondary);border-radius:8px;padding:1rem;margin-bottom:1rem;font-size:0.88rem;line-height:1.8;"></div>
+    <input type="hidden" id="actionId"/>
+    <div class="form-group" style="margin-bottom:1.25rem;">
+      <label>Remarks (optional)</label>
+      <textarea id="actionRemarks" placeholder="Add a comment for the student..."></textarea>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-success" onclick="decide('Approved')">✅ Approve</button>
+      <button class="btn btn-danger" onclick="decide('Rejected')">❌ Reject</button>
+      <button class="btn btn-ghost" onclick="closeModal('actionModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script src="../app.js"></script>
+<script>
+  Auth.require('Warden');
+  initSidebar();
+  const wb = Auth.current().block;
+  document.getElementById('sb-block') && (document.getElementById('sb-block').textContent = wb);
+  let currentTab = 'pending';
+
+  function switchTab(t) {
+    currentTab = t;
+    document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', ['pending','all'][i] === t));
+    document.getElementById('tableTitle').textContent = t === 'pending' ? 'Pending Leave Requests' : 'All Leave Requests';
+    render();
+  }
+
+  function render() {
+    const all = Store.get('he_leaves').filter(l => l.userBlock === wb);
+    document.getElementById('cnt-pending').textContent = all.filter(l => l.status === 'Pending').length;
+    document.getElementById('cnt-approved').textContent = all.filter(l => l.status === 'Approved').length;
+    document.getElementById('cnt-rejected').textContent = all.filter(l => l.status === 'Rejected').length;
+
+    const data = currentTab === 'pending' ? all.filter(l => l.status === 'Pending') : all;
+    const tbody = document.getElementById('leaveBody');
+    const empty = document.getElementById('emptyState');
+
+    if (!data.length) { tbody.innerHTML = ''; empty.style.display = ''; return; }
+    empty.style.display = 'none';
+
+    tbody.innerHTML = data.map((l, i) => `
+      <tr>
+        <td>${i+1}</td>
+        <td><strong>${l.userName}</strong></td>
+        <td>${l.userRoom || '—'}</td>
+        <td>${l.leaveType}</td>
+        <td>${fmt(l.fromDate)}</td>
+        <td>${fmt(l.toDate)}</td>
+        <td><strong>${l.days}</strong></td>
+        <td>${l.destination}</td>
+        <td>${badge(l.status)}</td>
+        <td>
+          ${l.status === 'Pending'
+            ? `<button class="btn btn-primary btn-xs" onclick="openAction('${l.id}')">Review</button>`
+            : `<span style="font-size:0.78rem;color:var(--muted);">${l.remarks || '—'}</span>`}
+        </td>
+      </tr>`).join('');
+  }
+
+  function openAction(id) {
+    const l = Store.get('he_leaves').find(x => x.id === id);
+    if (!l) return;
+    document.getElementById('actionId').value = id;
+    document.getElementById('actionRemarks').value = '';
+    document.getElementById('modalDetails').innerHTML = `
+      <strong>Student:</strong> ${l.userName} (${l.userRoom || '—'})<br/>
+      <strong>Type:</strong> ${l.leaveType}<br/>
+      <strong>Dates:</strong> ${fmt(l.fromDate)} → ${fmt(l.toDate)} (${l.days} days)<br/>
+      <strong>Destination:</strong> ${l.destination}<br/>
+      <strong>Reason:</strong> ${l.reason}<br/>
+      <strong>Parent Contact:</strong> ${l.parentContact}`;
+    openModal('actionModal');
+  }
+
+  function decide(status) {
+    const id = document.getElementById('actionId').value;
+    Store.update('he_leaves', id, { status, remarks: document.getElementById('actionRemarks').value.trim() });
+    closeModal('actionModal');
+    toast(`Leave ${status.toLowerCase()}!`, status === 'Approved' ? 'success' : 'error');
+    render();
+  }
+
+  render();
+</script>
+</body>
+</html>

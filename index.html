@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HostelEase</title>
+  <script src="app.js"></script>
+  <script>
+    const u = Auth.current();
+    if (u) {
+      if (u.role === 'Student') location.href = 'student/dashboard.html';
+      else if (u.role === 'Warden') location.href = 'warden/dashboard.html';
+      else location.href = 'admin/dashboard.html';
+    } else {
+      location.href = 'login.html';
+    }
+  </script>
+</head>
+<body></body>
+</html>

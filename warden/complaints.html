@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Complaints — Warden — HostelEase</title>
+  <link rel="stylesheet" href="../style.css"/>
+</head>
+<body>
+<div class="app-layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <a href="dashboard.html" class="brand">
+        <div class="brand-icon">🏠</div>
+        <div><div class="brand-name">HostelEase</div><div class="brand-sub">Warden Portal</div></div>
+      </a>
+    </div>
+    <div class="sidebar-user">
+      <div class="su-avatar" id="sb-avatar">W</div>
+      <div class="su-name" id="sb-name">Warden</div>
+      <div class="su-role" id="sb-role">Warden</div>
+      <div style="margin-top:6px;display:inline-block;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);border-radius:20px;padding:2px 10px;font-size:0.72rem;color:#fff;font-weight:600;">Block <span id="sb-block"></span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="dashboard.html" class="nav-item"><span class="ni">📊</span> Dashboard</a>
+      <div class="nav-section-label">Manage</div>
+      <a href="complaints.html" class="nav-item active"><span class="ni">📣</span> Complaints</a>
+      <a href="leave.html" class="nav-item"><span class="ni">📋</span> Leave Requests</a>
+      <a href="outpass.html" class="nav-item"><span class="ni">🚪</span> Outpass</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="Auth.logout()"><span>🚪</span> Logout</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <h2>Complaint Management</h2>
+        <p id="tb-greet">Review and update complaints</p>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-avatar" id="tb-avatar">W</div>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:1.25rem;">
+        <div class="stat-card orange">
+          <div class="stat-icon-wrap">⏳</div>
+          <div><div class="stat-value" id="cnt-pending">0</div><div class="stat-label">Pending</div></div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-icon-wrap">🔧</div>
+          <div><div class="stat-value" id="cnt-progress">0</div><div class="stat-label">In Progress</div></div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon-wrap">✅</div>
+          <div><div class="stat-value" id="cnt-resolved">0</div><div class="stat-label">Resolved</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">All Complaints</div></div>
+          <div style="display:flex;gap:8px;">
+            <select id="filterCat" onchange="render()" style="padding:6px 12px;font-size:0.82rem;border-radius:8px;border:1.5px solid var(--border);">
+              <option value="">All Categories</option>
+              <option>Electricity</option><option>Water</option><option>Furniture</option>
+              <option>Cleaning</option><option>Internet</option><option>Other</option>
+            </select>
+            <select id="filterStatus" onchange="render()" style="padding:6px 12px;font-size:0.82rem;border-radius:8px;border:1.5px solid var(--border);">
+              <option value="">All Status</option>
+              <option>Pending</option><option>In Progress</option><option>Resolved</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Student</th><th>Room</th><th>Category</th><th>Subject</th><th>Priority</th><th>Date</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="complaintBody"></tbody>
+          </table>
+        </div>
+        <div id="emptyState" class="empty-state" style="display:none;">
+          <div class="es-icon">📭</div><p>No complaints found.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Update Modal -->
+<div class="modal-overlay" id="updateModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Update Complaint</h3>
+      <button class="modal-close" onclick="closeModal('updateModal')">✕</button>
+    </div>
+    <input type="hidden" id="editId"/>
+    <div class="form-group" style="margin-bottom:1rem;">
+      <label>Status</label>
+      <select id="editStatus">
+        <option>Pending</option>
+        <option>In Progress</option>
+        <option>Resolved</option>
+      </select>
+    </div>
+    <div class="form-group" style="margin-bottom:1.25rem;">
+      <label>Remarks / Comments</label>
+      <textarea id="editRemarks" placeholder="Add a comment for the student..."></textarea>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary" onclick="saveUpdate()">💾 Save</button>
+      <button class="btn btn-ghost" onclick="closeModal('updateModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script src="../app.js"></script>
+<script>
+  Auth.require('Warden');
+  initSidebar();
+  const wb = Auth.current().block;
+  const sbBlock = document.getElementById('sb-block');
+  if (sbBlock) sbBlock.textContent = wb; = document.getElementById('filterCat').value;
+    const stF = document.getElementById('filterStatus').value;
+    let data = Store.get('he_complaints').filter(c => c.userBlock === wb);
+    if (catF) data = data.filter(c => c.category === catF);
+    if (stF) data = data.filter(c => c.status === stF);
+
+    const all = Store.get('he_complaints').filter(c => c.userBlock === wb);
+    document.getElementById('cnt-pending').textContent = all.filter(c => c.status === 'Pending').length;
+    document.getElementById('cnt-progress').textContent = all.filter(c => c.status === 'In Progress').length;
+    document.getElementById('cnt-resolved').textContent = all.filter(c => c.status === 'Resolved').length;
+
+    const tbody = document.getElementById('complaintBody');
+    const empty = document.getElementById('emptyState');
+    if (!data.length) { tbody.innerHTML = ''; empty.style.display = ''; return; }
+    empty.style.display = 'none';
+
+    tbody.innerHTML = data.map((c, i) => `
+      <tr>
+        <td>${i+1}</td>
+        <td><strong>${c.userName}</strong></td>
+        <td>${c.userRoom || '—'}</td>
+        <td>${c.category}</td>
+        <td>${c.subject}</td>
+        <td><span class="badge" style="background:${c.priority==='High'?'#fef2f2':c.priority==='Medium'?'#fffbeb':'#f0fdf4'};color:${c.priority==='High'?'#dc2626':c.priority==='Medium'?'#d97706':'#16a34a'}">${c.priority}</span></td>
+        <td>${fmt(c.createdAt)}</td>
+        <td>${badge(c.status)}</td>
+        <td><button class="btn btn-primary btn-xs" onclick="openEdit('${c.id}')">✏️ Update</button></td>
+      </tr>`).join('');
+  }
+
+  function openEdit(id) {
+    const c = Store.get('he_complaints').find(x => x.id === id);
+    if (!c) return;
+    document.getElementById('editId').value = id;
+    document.getElementById('editStatus').value = c.status;
+    document.getElementById('editRemarks').value = c.remarks || '';
+    openModal('updateModal');
+  }
+
+  function saveUpdate() {
+    const id = document.getElementById('editId').value;
+    Store.update('he_complaints', id, {
+      status: document.getElementById('editStatus').value,
+      remarks: document.getElementById('editRemarks').value.trim(),
+    });
+    closeModal('updateModal');
+    toast('Complaint updated!');
+    render();
+  }
+
+  render();
+</script>
+</body>
+</html>

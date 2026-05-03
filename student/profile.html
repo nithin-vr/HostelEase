@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Profile — HostelEase</title>
+  <link rel="stylesheet" href="../style.css"/>
+</head>
+<body>
+<div class="app-layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <a href="dashboard.html" class="brand">
+        <div class="brand-icon">🏠</div>
+        <div><div class="brand-name">HostelEase</div><div class="brand-sub">Student Portal</div></div>
+      </a>
+    </div>
+    <div class="sidebar-user">
+      <div class="su-avatar" id="sb-avatar">R</div>
+      <div class="su-name" id="sb-name">Student</div>
+      <div class="su-role" id="sb-role">Student</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="dashboard.html" class="nav-item"><span class="ni">📊</span> Dashboard</a>
+      <div class="nav-section-label">Requests</div>
+      <a href="complaints.html" class="nav-item"><span class="ni">📣</span> Complaints</a>
+      <a href="leave.html" class="nav-item"><span class="ni">📋</span> Leave Request</a>
+      <a href="outpass.html" class="nav-item"><span class="ni">🚪</span> Outpass</a>
+      <div class="nav-section-label">Account</div>
+      <a href="profile.html" class="nav-item active"><span class="ni">👤</span> Profile</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="Auth.logout()"><span>🚪</span> Logout</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <h2>My Profile</h2>
+        <p id="tb-greet">Manage your account</p>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-avatar" id="tb-avatar">R</div>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <div style="display:grid;grid-template-columns:1fr 2fr;gap:1.25rem;align-items:start;">
+
+        <!-- Profile Card -->
+        <div class="card" style="text-align:center;">
+          <div style="width:80px;height:80px;border-radius:20px;background:linear-gradient(135deg,#2563EB,#1d4ed8);display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;color:#fff;margin:0 auto 1rem;" id="bigAvatar">R</div>
+          <div style="font-size:1.2rem;font-weight:800;" id="profileName">—</div>
+          <div style="font-size:0.82rem;color:var(--muted);margin-top:4px;" id="profileEmail">—</div>
+          <div style="margin-top:12px;">
+            <span class="badge badge-approved">Student</span>
+          </div>
+          <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);display:flex;justify-content:space-around;font-size:0.82rem;color:var(--muted);">
+            <div><div style="font-size:1.2rem;font-weight:800;color:var(--text);" id="pRoom">—</div>Room</div>
+            <div><div style="font-size:1.2rem;font-weight:800;color:var(--text);" id="pBlock">—</div>Block</div>
+          </div>
+        </div>
+
+        <!-- Edit Form -->
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Edit Profile</div><div class="card-sub">Update your information</div></div>
+          </div>
+          <form id="profileForm">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="pName" required/>
+              </div>
+              <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="pEmail" required/>
+              </div>
+              <div class="form-group">
+                <label>Room Number</label>
+                <input type="text" id="pRoomInput" placeholder="e.g. A-204"/>
+              </div>
+              <div class="form-group">
+                <label>Hostel Block</label>
+                <select id="pBlockInput">
+                  <option value="">Select Block</option>
+                  <option>A</option><option>B</option><option>C</option><option>D</option>
+                </select>
+              </div>
+            </div>
+            <div style="border-top:1px solid var(--border);margin:1.25rem 0;padding-top:1.25rem;">
+              <div class="card-title" style="margin-bottom:1rem;">Change Password</div>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>New Password</label>
+                  <input type="password" id="newPass" placeholder="Leave blank to keep current" minlength="6"/>
+                </div>
+                <div class="form-group">
+                  <label>Confirm Password</label>
+                  <input type="password" id="confirmPass" placeholder="Repeat new password"/>
+                </div>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Stats Summary -->
+      <div class="card" style="margin-top:0;">
+        <div class="card-title" style="margin-bottom:1rem;">Activity Summary</div>
+        <div class="stats-grid">
+          <div class="stat-card blue">
+            <div class="stat-icon-wrap">📣</div>
+            <div><div class="stat-value" id="ps-c">0</div><div class="stat-label">Complaints</div></div>
+          </div>
+          <div class="stat-card cyan">
+            <div class="stat-icon-wrap">📋</div>
+            <div><div class="stat-value" id="ps-l">0</div><div class="stat-label">Leave Requests</div></div>
+          </div>
+          <div class="stat-card orange">
+            <div class="stat-icon-wrap">🚪</div>
+            <div><div class="stat-value" id="ps-o">0</div><div class="stat-label">Outpasses</div></div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-icon-wrap">✅</div>
+            <div><div class="stat-value" id="ps-a">0</div><div class="stat-label">Approved</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script src="../app.js"></script>
+<script>
+  const u = Auth.require('Student');
+  initSidebar();
+
+  function loadProfile() {
+    document.getElementById('bigAvatar').textContent = u.name.charAt(0).toUpperCase();
+    document.getElementById('profileName').textContent = u.name;
+    document.getElementById('profileEmail').textContent = u.email;
+    document.getElementById('pRoom').textContent = u.room || '—';
+    document.getElementById('pBlock').textContent = u.block || '—';
+    document.getElementById('pName').value = u.name;
+    document.getElementById('pEmail').value = u.email;
+    document.getElementById('pRoomInput').value = u.room || '';
+    document.getElementById('pBlockInput').value = u.block || '';
+
+    const complaints = Store.get('he_complaints').filter(c => c.userId === u.id);
+    const leaves = Store.get('he_leaves').filter(l => l.userId === u.id);
+    const outpasses = Store.get('he_outpasses').filter(o => o.userId === u.id);
+    const approved = leaves.filter(l => l.status === 'Approved').length + outpasses.filter(o => o.status === 'Approved').length;
+    document.getElementById('ps-c').textContent = complaints.length;
+    document.getElementById('ps-l').textContent = leaves.length;
+    document.getElementById('ps-o').textContent = outpasses.length;
+    document.getElementById('ps-a').textContent = approved;
+  }
+
+  document.getElementById('profileForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const newPass = document.getElementById('newPass').value;
+    const confirmPass = document.getElementById('confirmPass').value;
+    if (newPass && newPass !== confirmPass) { toast('Passwords do not match', 'error'); return; }
+
+    const users = Store.get('he_users');
+    const idx = users.findIndex(x => x.id === u.id);
+    if (idx === -1) return;
+
+    users[idx].name = document.getElementById('pName').value.trim();
+    users[idx].email = document.getElementById('pEmail').value.trim();
+    users[idx].room = document.getElementById('pRoomInput').value.trim();
+    users[idx].block = document.getElementById('pBlockInput').value;
+    if (newPass) users[idx].password = newPass;
+
+    Store.set('he_users', users);
+    Auth.login(users[idx]);
+    toast('Profile updated successfully!');
+    loadProfile();
+    initSidebar();
+  });
+
+  loadProfile();
+</script>
+</body>
+</html>

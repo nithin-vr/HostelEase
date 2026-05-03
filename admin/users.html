@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>User Management — Admin — HostelEase</title>
+  <link rel="stylesheet" href="../style.css"/>
+</head>
+<body>
+<div class="app-layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <a href="dashboard.html" class="brand">
+        <div class="brand-icon">🏠</div>
+        <div><div class="brand-name">HostelEase</div><div class="brand-sub">Admin Portal</div></div>
+      </a>
+    </div>
+    <div class="sidebar-user">
+      <div class="su-avatar" id="sb-avatar">A</div>
+      <div class="su-name" id="sb-name">Admin</div>
+      <div class="su-role" id="sb-role">Admin</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="dashboard.html" class="nav-item"><span class="ni">📊</span> Dashboard</a>
+      <div class="nav-section-label">Management</div>
+      <a href="users.html" class="nav-item active"><span class="ni">👥</span> Users</a>
+      <a href="reports.html" class="nav-item"><span class="ni">📈</span> Reports</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="Auth.logout()"><span>🚪</span> Logout</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <h2>User Management</h2>
+        <p id="tb-greet">Manage all system users</p>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-primary btn-sm" onclick="openModal('addModal')">+ Add User</button>
+        <div class="topbar-avatar" id="tb-avatar">A</div>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:1.25rem;">
+        <div class="stat-card blue">
+          <div class="stat-icon-wrap">🎓</div>
+          <div><div class="stat-value" id="cnt-students">0</div><div class="stat-label">Students</div></div>
+        </div>
+        <div class="stat-card cyan">
+          <div class="stat-icon-wrap">🛡️</div>
+          <div><div class="stat-value" id="cnt-wardens">0</div><div class="stat-label">Wardens</div></div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-icon-wrap">⚙️</div>
+          <div><div class="stat-value" id="cnt-admins">0</div><div class="stat-label">Admins</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">All Users</div></div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="text" id="searchInput" placeholder="Search by name or email..." oninput="render()"
+              style="padding:7px 12px;font-size:0.82rem;border-radius:8px;border:1.5px solid var(--border);width:220px;"/>
+            <select id="roleFilter" onchange="render()" style="padding:7px 12px;font-size:0.82rem;border-radius:8px;border:1.5px solid var(--border);">
+              <option value="">All Roles</option>
+              <option>Student</option><option>Warden</option><option>Admin</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Name</th><th>Email</th><th>Role</th><th>Room</th><th>Block</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="userBody"></tbody>
+          </table>
+        </div>
+        <div id="emptyState" class="empty-state" style="display:none;">
+          <div class="es-icon">👥</div><p>No users found.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Add New User</h3>
+      <button class="modal-close" onclick="closeModal('addModal')">✕</button>
+    </div>
+    <form id="addForm">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="aName" required/>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="aEmail" required/>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="aPassword" required minlength="6"/>
+        </div>
+        <div class="form-group">
+          <label>Role</label>
+          <select id="aRole">
+            <option>Student</option><option>Warden</option><option>Admin</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Room Number</label>
+          <input type="text" id="aRoom" placeholder="e.g. A-204"/>
+        </div>
+        <div class="form-group">
+          <label>Block</label>
+          <select id="aBlock">
+            <option value="">—</option>
+            <option>A</option><option>B</option><option>C</option><option>D</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:1rem;">
+        <button type="submit" class="btn btn-primary">Add User</button>
+        <button type="button" class="btn btn-ghost" onclick="closeModal('addModal')">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Edit User</h3>
+      <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+    </div>
+    <input type="hidden" id="editId"/>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="eName"/>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="eEmail"/>
+      </div>
+      <div class="form-group">
+        <label>Role</label>
+        <select id="eRole">
+          <option>Student</option><option>Warden</option><option>Admin</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Room</label>
+        <input type="text" id="eRoom"/>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:1rem;">
+      <button class="btn btn-primary" onclick="saveEdit()">💾 Save</button>
+      <button class="btn btn-ghost" onclick="closeModal('editModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script src="../app.js"></script>
+<script>
+  Auth.require('Admin');
+  initSidebar();
+
+  function render() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const roleF = document.getElementById('roleFilter').value;
+    let users = Store.get('he_users');
+    if (search) users = users.filter(u => u.name.toLowerCase().includes(search) || u.email.toLowerCase().includes(search));
+    if (roleF) users = users.filter(u => u.role === roleF);
+
+    const all = Store.get('he_users');
+    document.getElementById('cnt-students').textContent = all.filter(u => u.role === 'Student').length;
+    document.getElementById('cnt-wardens').textContent = all.filter(u => u.role === 'Warden').length;
+    document.getElementById('cnt-admins').textContent = all.filter(u => u.role === 'Admin').length;
+
+    const tbody = document.getElementById('userBody');
+    const empty = document.getElementById('emptyState');
+    if (!users.length) { tbody.innerHTML = ''; empty.style.display = ''; return; }
+    empty.style.display = 'none';
+
+    const roleColors = { Student: '#2563EB', Warden: '#06B6D4', Admin: '#8B5CF6' };
+    tbody.innerHTML = users.map((u, i) => `
+      <tr>
+        <td>${i+1}</td>
+        <td><strong>${u.name}</strong></td>
+        <td style="color:var(--muted);">${u.email}</td>
+        <td><span class="badge" style="background:${roleColors[u.role]}20;color:${roleColors[u.role]};">${u.role}</span></td>
+        <td>${u.room || '—'}</td>
+        <td>${u.block || '—'}</td>
+        <td style="display:flex;gap:6px;">
+          <button class="btn btn-ghost btn-xs" onclick="openEdit('${u.id}')">✏️ Edit</button>
+          <button class="btn btn-danger btn-xs" onclick="deleteUser('${u.id}')">🗑️</button>
+        </td>
+      </tr>`).join('');
+  }
+
+  document.getElementById('addForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const email = document.getElementById('aEmail').value.trim().toLowerCase();
+    if (Store.get('he_users').find(u => u.email.toLowerCase() === email)) { toast('Email already exists', 'error'); return; }
+    Store.add('he_users', {
+      id: uid(),
+      name: document.getElementById('aName').value.trim(),
+      email,
+      password: document.getElementById('aPassword').value,
+      role: document.getElementById('aRole').value,
+      room: document.getElementById('aRoom').value.trim(),
+      block: document.getElementById('aBlock').value,
+    });
+    closeModal('addModal');
+    this.reset();
+    toast('User added!');
+    render();
+  });
+
+  function openEdit(id) {
+    const u = Store.get('he_users').find(x => x.id === id);
+    if (!u) return;
+    document.getElementById('editId').value = id;
+    document.getElementById('eName').value = u.name;
+    document.getElementById('eEmail').value = u.email;
+    document.getElementById('eRole').value = u.role;
+    document.getElementById('eRoom').value = u.room || '';
+    openModal('editModal');
+  }
+
+  function saveEdit() {
+    const id = document.getElementById('editId').value;
+    Store.update('he_users', id, {
+      name: document.getElementById('eName').value.trim(),
+      email: document.getElementById('eEmail').value.trim(),
+      role: document.getElementById('eRole').value,
+      room: document.getElementById('eRoom').value.trim(),
+    });
+    closeModal('editModal');
+    toast('User updated!');
+    render();
+  }
+
+  function deleteUser(id) {
+    const cur = Auth.current();
+    if (cur && cur.id === id) { toast('Cannot delete yourself', 'error'); return; }
+    if (!confirm('Delete this user?')) return;
+    Store.remove('he_users', id);
+    toast('User deleted', 'error');
+    render();
+  }
+
+  render();
+</script>
+</body>
+</html>
